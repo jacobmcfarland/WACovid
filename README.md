@@ -1,2 +1,2 @@
 # WACovid
-## Last Updated 3/27/2020
+## Last Updated 3/28/2020
