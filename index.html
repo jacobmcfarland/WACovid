@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Washignton State Covid-19</title>    
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.5.0/Chart.js"></script>
+</head>
+<body>
+<div class="title">
+    <h1>Washignton State Covid-19</h1>
+</div>
+<div class="container stats">
+    <div id="" class="stat">
+       <div class="inner-stats">
+        <h2 id="currentCases" class=""></h2>
+        </div>
+    </div>
+    <div id="" class="stat">
+        <div class="inner-stats">
+        <h2 id="currentDeaths" class=""></h2>
+        </div>
+    </div>
+    <div id="" class="stat">
+        <div class="inner-stats">
+        <h2 id="currentDeathRate" class=""></h2>
+        </div>
+    </div>
+</div>
+<div class="container charts">
+    <div class="chart-container" style="position: relative;  display: block;">
+        <canvas id="totalCases"></canvas>
+    </div>
+    <div class="chart-container" style="position: relative;  display: block;">
+        <canvas id="totalCasesRateChange"></canvas>
+    </div>
+    <div class="chart-container" style="position: relative;  display: block;">
+        <canvas id="totalDeaths"></canvas>
+    </div>
+    <div class="chart-container" style="position: relative;  display: block;">
+        <canvas id="deathRate"></canvas>
+    </div>
+</div>
+
+</body>
+</html>
+
+<script>
+    
+/******* Functions ********/    
+
+    
+// Death Rate Function - death / cases
+function Arrays_sum(array1, array2) 
+{
+  var result = [];
+  var ctr = 0;
+  var x=0;
+
+  if (array1.length === 0) 
+   return "array1 is empty";
+  if (array2.length === 0) 
+   return "array2 is empty";   
+
+ while (ctr < array1.length && ctr < array2.length) 
+  {
+    result.push(((array1[ctr] / array2[ctr]) * 100).toFixed(2));
+    ctr++;
+  }
+
+ if (ctr === array1.length) 
+ {
+    for (x = ctr; x < array2.length; x++)   {
+      result.push(array2[x]);
+    }
+  } 
+  else
+  {
+  for (x = ctr; x < array1.length; x++) 
+    {
+      result.push(array1[x]);
+    }
+  }
+  return result;
+}
+        
+// Rate of change ( firstCase - secondCase / firstCase )
+function RateOfChange(totalCases) {  
+ var arr = totalCases;
+        //var arr=[96448, 35780];         
+          var diff=[];
+          $.each(arr,function(i,v){
+           //96448 - 35780 = 60668 / 96448 = 0,629 * 100 = 62,9%
+           if(i==arr.length-1){
+            diff.unshift('0');
+            return;
+           }
+           var first=v;
+           var second=arr[i+1];
+             var calc =(((first - second)/first)* -100).toFixed(2);
+             diff.push(calc);
+          });
+            return diff; 
+//          alert(diff.toString());
+}          
+   
+//// Current Death Rate - Total deaths / total cases
+//function currentDeathRate(var1, var2) { 
+//
+//    var sum1 = var1.reduce(function(a, b){
+//        return a + b;
+//    }, 0);
+//    
+//    var sum2 = var2.reduce(function(a, b){
+//        return a + b;
+//    }, 0);
+//    
+//    var rate = ((sum1 / sum2)* 100).toFixed(2); 
+//    
+//    return rate; 
+//    
+//}  
+    
+// Grab Last Item in Array 
+ 
+function lastItem(array) { 
+  var last = array[array.length - 1]; 
+return last;     
+  
+}
+ 
+// Add Thousand Seperator    
+function numberWithCommas(x) {
+    return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}    
+
+  
+/******* Variable ********/
+var days = ['Mar-13', 'Mar-14', 'Mar-15', 'Mar-16', 'Mar-17', 'Mar-18','Mar-19','Mar-20','Mar-21','Mar-22','Mar-23' ,'Mar-24' ,'Mar-25' ,'Mar-26', 'Mar-27'];     
+var dataTotalCases = [568,642,769,904,1012,1187,1376,1524,1793,1996,2221,2469,2580,3204,3700]; 
+var dataDeaths = [37,40, 42, 48, 52, 66, 74,83,94,95,110,123,132,147,175];  
+var dataDeathRate = Arrays_sum(dataDeaths, dataTotalCases); 
+var dataTotalCasesRateChange = RateOfChange(dataTotalCases); 
+//var dataTotalDeathRate = currentDeathRate(dataDeaths,dataTotalCases);    
+ 
+/******* Dom Manipulations  - Stats ********/  
+ 
+var lastTotalCase = numberWithCommas(lastItem(dataTotalCases)); 
+var lastDeaths =  lastItem(dataDeaths); 
+var lastDeathRate = lastItem(dataDeathRate);    
+
+    
+// Add the total death rate  
+document.getElementById("currentDeathRate").innerHTML = 'Death Rate: ' + lastDeathRate  + '%';
+document.getElementById("currentDeaths").innerHTML = 'Total Deaths: ' + lastDeaths;
+document.getElementById("currentCases").innerHTML = 'Total Cases: ' + lastTotalCase;
+
+
+/******* Charts ********/
+   
+
+    
+// Total Cases    
+var ctx2 = document.getElementById('totalCases').getContext('2d');
+var myChart = new Chart(ctx2, {
+    type: 'line',
+    data: {
+        labels: days,
+        datasets: [{
+            label: 'Total Cases',
+            data: dataTotalCases,
+            backgroundColor: 'rgba(255, 99, 132, 0.2)',
+            borderColor:  'rgba(255, 99, 132, 1)',
+            borderWidth: 3
+        }]
+    },
+    options: {
+        legend: {
+      position: 'top',
+      labels: {
+        fontColor: 'white'
+      }
+    },
+    
+        scales: {
+            yAxes: [{
+                ticks: {
+                    beginAtZero: true,
+                    fontColor: "white", 
+
+                }, 
+                gridLines: {
+                    color: 'rgba(255, 255, 255, 0.2)',
+                },
+            }],
+            xAxes: [{
+                ticks: {
+                  
+                    fontColor: "white", 
+
+                }, 
+                gridLines: {
+                    color: 'rgba(255, 255, 255, 0.2)',
+                },
+            }]
+        },
+        
+        responsive: true, 
+         layout: {
+            padding: {
+                left: 10,
+                right: 30,
+                top: 10,
+                bottom: 10
+            }
+        }
+        
+    }
+});
+    
+// Death Rate   
+var ctx = document.getElementById('deathRate').getContext('2d');
+var myChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: days,
+        datasets: [{
+            label: 'Death Rate',
+            data: dataDeathRate,
+            backgroundColor: 'rgba(54, 162, 235, 0.2)',
+            borderColor: 'rgba(54, 162, 235, 1)',
+            borderWidth: 3
+        }]
+    },
+    options: {
+        legend: {
+      position: 'top',
+      labels: {
+        fontColor: 'white'
+      }
+    },
+   
+        scales: {
+            yAxes: [{
+                ticks: {
+                    beginAtZero: true,
+                    fontColor: "white", 
+
+                }, 
+                gridLines: {
+                    color: 'rgba(255, 255, 255, 0.2)',
+                },
+            }],
+            xAxes: [{
+                ticks: {
+                  
+                    fontColor: "white", 
+
+                }, 
+                gridLines: {
+                    color: 'rgba(255, 255, 255, 0.2)',
+                },
+            }]
+        },
+        
+        responsive: true, 
+         layout: {
+            padding: {
+                left: 10,
+                right: 30,
+                 top: 10,
+                bottom: 10
+            }
+        },
+        tooltips: {
+              callbacks: {
+                label: function(tooltipItem, data) {
+                  return Chart.defaults.global.tooltips.callbacks.label(tooltipItem, data) + '%';
+                }
+              }
+        }
+
+    }
+});   
+    
+// Total Deaths  
+var ctx = document.getElementById('totalDeaths').getContext('2d');
+var myChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: days,
+        datasets: [{
+            label: 'Total Deaths',
+            data: dataDeaths,
+            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+           borderColor:  'rgba(75, 192, 192, 1)',
+           borderWidth: 3
+        }]
+    },
+    options: {
+        legend: {
+      position: 'top',
+      labels: {
+        fontColor: 'white'
+      }
+    },
+   
+        scales: {
+            yAxes: [{
+                ticks: {
+                    beginAtZero: true,
+                    fontColor: "white", 
+
+                }, 
+                gridLines: {
+                    color: 'rgba(255, 255, 255, 0.2)',
+                },
+            }],
+            xAxes: [{
+                ticks: {
+                  
+                    fontColor: "white", 
+
+                }, 
+                gridLines: {
+                    color: 'rgba(255, 255, 255, 0.2)',
+                },
+            }]
+        },
+        
+        responsive: true,
+         layout: {
+            padding: {
+                left: 10,
+                right: 30,
+                 top: 10,
+                bottom: 10
+            }
+        },
+    }
+});      
+    
+// Total Cases Rate Change 
+var ctx = document.getElementById('totalCasesRateChange').getContext('2d');
+var myChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: days,
+        datasets: [{
+            label: 'Total Cases Rate Change',
+            data: dataTotalCasesRateChange,
+            backgroundColor: 'rgba(255, 206, 86, 0.2)',
+            borderColor: 'rgba(255, 206, 86, 1)',
+               
+            borderWidth: 3
+        }]
+    },
+    options: {
+       
+        legend: {
+      position: 'top',
+      labels: {
+        fontColor: 'white'
+      }
+    },
+    
+        scales: {
+            yAxes: [{
+                ticks: {
+                    beginAtZero: true,
+                    fontColor: "white", 
+
+                }, 
+                gridLines: {
+                    color: 'rgba(255, 255, 255, 0.2)',
+                },
+            }],
+            xAxes: [{
+                ticks: {
+                  
+                    fontColor: "white", 
+
+                }, 
+                gridLines: {
+                    color: 'rgba(255, 255, 255, 0.2)',
+                },
+            }]
+        },
+        
+        responsive: true, 
+         layout: {
+            padding: {
+                left: 10,
+                right: 30,
+               
+                bottom: 10
+            }
+        },
+        tooltips: {
+              callbacks: {
+                label: function(tooltipItem, data) {
+                  return Chart.defaults.global.tooltips.callbacks.label(tooltipItem, data) + '%';
+                }
+              }
+        }
+           
+    }
+});   
+    
+// A plugin to draw the background color
+Chart.plugins.register({
+  beforeDraw: function(chartInstance) {
+    var ctx = chartInstance.chart.ctx;
+    ctx.fillStyle = 'black';
+    ctx.fillRect(0, 0, chartInstance.chart.width, chartInstance.chart.height);
+  }
+    
+})
+    
+</script>
+<style>
+    
+    body { 
+    font-family: sans-serif; 
+    background: #000; 
+    color: #fff;     
+    }
+    
+    h2 {
+        text-transform: uppercase; 
+    }
+    
+    .container, .title { 
+    max-width: 90vw; 
+    margin: 0 auto; 
+         margin-top: 80px;
+    margin-bottom: 80px;
+    }
+    
+    
+   
+    
+    .title { 
+    text-align: center; 
+   
+    }
+    
+    canvas { 
+    max-width: 100%; 
+    }
+    
+    
+    .inner-stats {
+    width: 100%;
+    height: 200px;
+    background: #38a3eb;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    border-radius: 5px;
+    box-shadow: 2px 2px 6px 1px rgba(0,0,0,0.5);
+}
+    .charts, .stats { 
+    display: grid; 
+    grid-row-gap: 40px;     
+    }
+    
+    
+    @media (min-width: 1000px) { 
+   .charts {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-gap: 40px;    
+}
+        .stats { 
+        display: grid; 
+        grid-template-columns: 1fr 1fr 1fr;
+    grid-gap: 40px;    
+            text-align: center; 
+        }    
+}
+    
+</style>
